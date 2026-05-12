@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Validation helpers
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid == request.auth.uid &&
+             data.email is string &&
+             data.email.size() <= 256;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['userId', 'title', 'createdAt', 'updatedAt']) &&
+             data.userId == request.auth.uid &&
+             data.title is string && data.title.size() <= 256 &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    // Collection: users
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && 
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']) &&
+                      request.resource.data.updatedAt == request.time;
+    }
+
+    // Collection: products
+    match /products/{productId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isEmailVerified() && isValidProduct(request.resource.data);
+      allow update: if isOwner(resource.data.userId) && 
+                      isValidProduct(request.resource.data) &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['title', 'category', 'status', 'ideas', 'updatedAt']) &&
+                      request.resource.data.userId == resource.data.userId &&
+                      request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Collection: niches
+    match /niches/{nicheId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if isSignedIn() && isEmailVerified() && isValidNiche(request.resource.data);
+      allow delete: if isOwner(resource.data.userId);
+    }
+  }
+
+  function isValidNiche(data) {
+    return data.keys().hasAll(['userId', 'productType', 'targetAudience', 'nicheIdea', 'createdAt']) &&
+           data.userId == request.auth.uid &&
+           data.productType is string && data.productType.size() <= 256 &&
+           data.createdAt is timestamp;
+  }
+}
+

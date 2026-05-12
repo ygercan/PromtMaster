@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Stores user profile and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isAdmin": { "type": "boolean" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Product": {
+      "title": "Product Package",
+      "description": "A complete Etsy-ready digital product package.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "style": { "type": "string" },
+        "targetAudience": { "type": "string" },
+        "colorPalette": { "type": "array", "items": { "type": "string" } },
+        "ideas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "prompt": { "type": "string" },
+              "negativePrompt": { "type": "string" },
+              "etsyTitle": { "type": "string" },
+              "tags": { "type": "array", "items": { "type": "string" } },
+              "description": { "type": "string" },
+              "canvaSpecs": {
+                "type": "object",
+                "properties": {
+                  "dimensions": { "type": "string" },
+                  "layout": { "type": "string" },
+                  "fonts": { "type": "array", "items": { "type": "string" } }
+                }
+              },
+              "mockupSuggestion": { "type": "string" }
+            }
+          }
+        },
+        "status": { "type": "string", "enum": ["draft", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "createdAt"]
+    },
+    "SavedNiche": {
+      "title": "Saved Niche Idea",
+      "description": "A saved niche idea from Niche Finder.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "productType": { "type": "string" },
+        "targetAudience": { "type": "string" },
+        "style": { "type": "string" },
+        "season": { "type": "string" },
+        "nicheIdea": { "type": "string" },
+        "reasoning": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "productType", "targetAudience", "nicheIdea", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "Global user directory"
+    },
+    "products": {
+      "schema": "Product",
+      "description": "Generated product packages"
+    },
+    "niches": {
+      "schema": "SavedNiche",
+      "description": "Saved niche ideas"
+    }
+  }
+}
